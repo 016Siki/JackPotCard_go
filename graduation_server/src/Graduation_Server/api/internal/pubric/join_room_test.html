@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <title>ルーム参加APIテスト</title>
+</head>
+<body>
+    <h2>ルーム参加API テストフォーム</h2>
+    <form id="joinRoomForm">
+        <label>
+            JWTトークン（Authorizationヘッダー用）:<br />
+            <textarea id="jwtToken" rows="3" cols="50" placeholder="Bearer トークンをここに貼り付け"></textarea>
+        </label>
+        <br /><br />
+        <label>
+            参加したいルームID:<br />
+            <input type="number" id="roomId" required />
+        </label>
+        <br /><br />
+        <label>
+            プレイヤー名:<br />
+            <input type="text" id="playerName" required />
+        </label>
+        <br /><br />
+        <button type="submit">参加リクエスト送信</button>
+    </form>
+
+    <h3>レスポンス</h3>
+    <pre id="response"></pre>
+
+    <script>
+        document.getElementById('joinRoomForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const token = document.getElementById('jwtToken').value.trim();
+            const roomId = document.getElementById('roomId').value.trim();
+            const playerName = document.getElementById('playerName').value.trim();
+
+            if (!token || !roomId || !playerName) {
+                alert('すべての項目を入力してください');
+                return;
+            }
+
+            try {
+                const res = await fetch('https://192.168.0.2/api/join-room', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token.startsWith('Bearer ') ? token : 'Bearer ' + token,
+                    },
+                    body: JSON.stringify({
+                        room_id: Number(roomId),
+                        player_name: playerName
+                    }),
+                });
+
+                const data = await res.json();
+
+                document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+
+                if (!res.ok) {
+                    alert('エラー: ' + (data.message || res.statusText));
+                }
+            } catch (err) {
+                document.getElementById('response').textContent = '通信エラー: ' + err.message;
+                alert('通信エラー: ' + err.message);
+            }
+        });
+    </script>
+</body>
+</html>
