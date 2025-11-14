@@ -16,6 +16,7 @@ type ReadyResponse struct {
 // ReadyHandler は「ルーム内でユーザーが準備完了状態になった」ことを更新するハンドラ。
 func ReadyHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// ユーザーID取得
 		userID := middleware.GetUserID(r)
 		var req ReadyRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

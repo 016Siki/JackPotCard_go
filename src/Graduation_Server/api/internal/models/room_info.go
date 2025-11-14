@@ -4,6 +4,7 @@ import (
 	"database/sql"
 )
 
+// 型定義
 type PlayerInfo struct {
 	Name    string `json:"name"`
 	IsReady bool   `json:"is_ready"`
