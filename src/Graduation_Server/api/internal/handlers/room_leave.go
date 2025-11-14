@@ -8,10 +8,12 @@ import (
 	"net/http"
 )
 
+// リクエスト
 type LeaveRoomRequest struct {
 	RoomCode string `json:"room_code"`
 }
 
+// レスポンス
 type LeaveRoomResponse struct {
 	Result         string `json:"result"` // "OK"
 	RoomCode       string `json:"room_code"`
@@ -21,6 +23,7 @@ type LeaveRoomResponse struct {
 }
 
 func LeaveRoomHandler(db *sql.DB) http.HandlerFunc {
+	// 認証 & リクエストチェック
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := middleware.GetUserID(r)
 		if userID == 0 {

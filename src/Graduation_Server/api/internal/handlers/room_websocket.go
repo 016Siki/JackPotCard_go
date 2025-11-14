@@ -17,6 +17,7 @@ import (
 var roomConnections = make(map[string]map[*websocket.Conn]int64)
 var roomConnMu sync.Mutex
 
+// WebSocket メッセージ構造
 type ReadyRequest struct {
 	RoomCode string `json:"room_code"`
 	IsReady  bool   `json:"is_ready"`
@@ -44,7 +45,7 @@ type AllReadyResponse struct {
 type StartGameBroadcast struct {
 	Type     string `json:"type"` // "start_game"
 	RoomCode string `json:"room_code"`
-	GameID   int64  `json:"game_id"` // ← クライアントに渡すと便利
+	GameID   int64  `json:"game_id"`
 }
 
 func GameRoomWebSocketHandler(db *sql.DB) http.HandlerFunc {
@@ -55,7 +56,11 @@ func GameRoomWebSocketHandler(db *sql.DB) http.HandlerFunc {
 			log.Println("WebSocket Upgrade Error:", err)
 			return
 		}
-		defer conn.Close()
+		log.Println("WS connected")
+		defer func() {
+			log.Println("WS closing")
+			conn.Close()
+		}()
 
 		roomCode := mux.Vars(r)["room_code"]
 		userID := middleware.GetUserID(r)
@@ -78,7 +83,7 @@ func GameRoomWebSocketHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// 受信制限 & 死活監視
-		conn.SetReadLimit(5 << 20) // 1MB
+		conn.SetReadLimit(50 << 20) // 20MB
 		_ = conn.SetReadDeadline(time.Now().Add(180 * time.Second))
 		conn.SetPongHandler(func(string) error {
 			return conn.SetReadDeadline(time.Now().Add(180 * time.Second))
@@ -257,6 +262,7 @@ func closeUserConnections(roomCode string, userID int64) {
 	if connMap == nil {
 		return
 	}
+
 	for c, uid := range connMap {
 		if uid == userID {
 			delete(connMap, c)

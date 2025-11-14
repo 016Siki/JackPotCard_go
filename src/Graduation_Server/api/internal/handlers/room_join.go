@@ -9,10 +9,12 @@ import (
 	"net/http"
 )
 
+// リクエスト
 type JoinRoomRequest struct {
 	RoomCode string `json:"room_code"`
 }
 
+// レスポンス
 type JoinRoomResponse struct {
 	Result   string `json:"result"`
 	RoomID   int64  `json:"room_id"`
@@ -22,19 +24,20 @@ type JoinRoomResponse struct {
 }
 
 func JoinRoomHandler(db *sql.DB) http.HandlerFunc {
+	// 認証チェック
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := middleware.GetUserID(r)
 		if userID == 0 {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-
+		// リクエスト JSON のデコード & バリデーション
 		var req JoinRoomRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RoomCode == "" {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
-
+		// ルーム取得 & 状態チェック
 		room, err := models.GetRoomByCode(db, req.RoomCode)
 		if err != nil {
 			http.Error(w, "Room not found", http.StatusNotFound)
@@ -81,17 +84,18 @@ func JoinRoomHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "DB error", http.StatusInternalServerError)
 			return
 		}
+		// 人数上限チェック
 		if count >= room.MaxPlayers {
 			http.Error(w, "Room full", http.StatusForbidden)
 			return
 		}
-
+		// room_users に新規参加登録
 		if err := models.AddUserToRoom(db, room.ID, userID); err != nil {
 			log.Printf("AddUserToRoom error: %v", err)
 			http.Error(w, "DB error", http.StatusInternalServerError)
 			return
 		}
-
+		// game_name を取得してレスポンス
 		var gameName string
 		if err := db.QueryRow(`
 			SELECT gt.name

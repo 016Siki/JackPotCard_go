@@ -2,12 +2,14 @@ package models
 
 import "database/sql"
 
+// room_users から room_id ごとの人数を数える
 func CountUsersInRoomTx(tx *sql.Tx, roomID int64) (int, error) {
 	var cnt int
 	err := tx.QueryRow(`SELECT COUNT(*) FROM room_users WHERE room_id = ?`, roomID).Scan(&cnt)
 	return cnt, err
 }
 
+// LeaveRoomHandler で、残り 0 人になったとき status='closed' にするのに使用。
 func UpdateRoomStatusTx(tx *sql.Tx, roomID int64, status string) error {
 	_, err := tx.Exec(`UPDATE rooms SET status = ? WHERE id = ?`, status, roomID)
 	return err
@@ -31,6 +33,7 @@ func PickNextOwnerTx(tx *sql.Tx, roomID int64) (userID int64, found bool, err er
 	return userID, true, nil
 }
 
+// rooms.owner_id = newOwnerID に更新するだけの関数。
 func SetRoomOwnerTx(tx *sql.Tx, roomID, newOwnerID int64) error {
 	_, err := tx.Exec(`UPDATE rooms SET owner_id = ? WHERE id = ?`, newOwnerID, roomID)
 	return err
