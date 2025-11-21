@@ -19,7 +19,7 @@ import (
 // そこに書かれているIPアドレス文字列を返す。
 // 例: ip.txt の中身が "192.168.0.10" の場合、DB接続先に利用される。
 func getLocalIP() (string, error) {
-	homeDir := os.Getenv("HOME")
+	homeDir := "/home/user1"
 	if homeDir == "" {
 		return "", fmt.Errorf("環境変数HOMEが設定されていません")
 	}
@@ -79,7 +79,6 @@ func main() {
 	r.HandleFunc("/api/game_mode", handlers.GameModeHandler)
 	r.HandleFunc("/api/solo_games", handlers.SoloGameListHandler)
 	r.HandleFunc("/api/friend_games", handlers.FriendGameListHandler)
-	r.HandleFunc("/ws/api/blackjackwebsocket", handlers.BlackjackWebSocketHandle)
 
 	// ========== 認証必須API（JWTミドルウェアで保護） ==========
 	// 依存注入（dbを引数で渡す）パターンのハンドラは http.Handler/Func を生成して渡す
@@ -100,7 +99,11 @@ func main() {
 		Methods("POST", "OPTIONS")
 	// ルーム内プレイヤー取得（GET限定）
 	r.HandleFunc("/api/rooms/{room_id}/players", handlers.GetPlayersForGameHandler(db)).Methods("GET")
-
+	// ブラックジャックゲーム
+	r.Handle(
+		"/api/ws/blackjackwebsocket/{room_code}",
+		middleware.JWTMiddleware(http.HandlerFunc(handlers.BlackjackWebSocketHandle(db))),
+	)
 	// 設定更新（ハンドラ側でグローバルdbを使う設計）
 	r.Handle("/api/update_settings",
 		middleware.JWTMiddleware(http.HandlerFunc(handlers.UpdateUserSettingsHandler)))

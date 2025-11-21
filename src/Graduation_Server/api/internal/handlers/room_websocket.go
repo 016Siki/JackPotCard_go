@@ -24,10 +24,11 @@ type ReadyRequest struct {
 }
 
 type PlayerInfo struct {
-	UserID  int64  `json:"user_id"`
-	Name    string `json:"name"`
-	IsReady bool   `json:"is_ready"`
-	IsHost  bool   `json:"is_host"`
+	UserID   int64  `json:"user_id"`
+	Name     string `json:"name"`
+	IsReady  bool   `json:"is_ready"`
+	IsHost   bool   `json:"is_host"`
+	IsDealer bool   `json:"is_dealer"`
 }
 
 type RoomStatusResponse struct {
