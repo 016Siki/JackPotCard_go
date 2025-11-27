@@ -29,7 +29,8 @@ go.work.sum
 
 # env file
 .env
-.tmp/
+tmp/
+src/Graduation_Server/api/tmp/
 
 # Editor/IDE
 # .idea/
